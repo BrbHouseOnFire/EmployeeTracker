@@ -28,13 +28,13 @@ let start = () => {
       }).then(answer => {
         //   a routing section for each of the options firing off a function for each
         if (answer.start === "View all employees.") {
-            view("employee");
+            viewEmp();
         }
         else if (answer.start === "View all departments.") {
-            view("department");
+            viewDep();
         }
         else if (answer.start === "View all roles.") {
-            view("role");
+            viewRole();
         }
         else if (answer.start === "Add an employee.") {
             addEmp();
@@ -57,21 +57,11 @@ let start = () => {
 }
 // Modular function for pulling SQL data
 // pulls all results based on the specified table input
-let view = (table) => {
-    if (table === "employee") viewEmp();
-    else {
-        connection.query("SELECT * FROM ??", [table], (err, res) => {
-            if (err) throw err;
-            console.log(`Available ${table}(s):`)
-            // display results
-            res.forEach((value) => {
-                console.log(value);
-            });
-            // return to main menu
-            start();
-        });
-    }
-}
+// let view = (table) => {
+//     if (table === "employee") viewEmp();
+//     else if (table === "department") viewDep();
+//     else if (table === "role") viewRole();
+// }
 let viewEmp = () => {
     connection.query(`
     select distinct e.id, e.first_name, e.last_name, r.title, e.role_id, r.salary, 
@@ -140,7 +130,36 @@ let viewEmp = () => {
     // console.table(values[0], values.slice(1));
     // // =============================================================================
 }
-
+let viewDep = () => {
+    
+    connection.query("SELECT * FROM department", (err, res) => {
+        if (err) throw err;
+        let displayArr = [];
+        res.forEach((value) => {
+            let element = [value.name];
+            displayArr.push(element);
+        });
+        // display results
+        console.table(['Department Name'], displayArr);
+        // return to main menu
+        start();
+    });
+}
+let viewRole = () => {
+    connection.query(`select distinct r.title, r.salary, d.name from role r 
+    inner join department d on r.department_id = d.id`, (err, res) => {
+        if (err) throw err;
+        let displayArr = [];
+        res.forEach((value) => {
+            let element = [value.title, value.salary, value.name];
+            displayArr.push(element);
+        });
+        // display results
+        console.table(['Title', 'Salary', 'Department'], displayArr);
+        // return to main menu
+        start();
+    });
+}
 
 let addEmp = () => {
     // query for roles and employees
