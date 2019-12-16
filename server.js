@@ -2,8 +2,7 @@
 const mysql = require("mysql");
 const cTable = require('console.table');
 const inquirer = require('inquirer');
-// Create instance of express app.
-
+// mysql connection settings
 const connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
@@ -11,18 +10,9 @@ const connection = mysql.createConnection({
     password: "123asdjkl",
     database: "emp_db"
 });
-// Initiate MySQL Connection.
-connection.connect(function(err) {
-    if (err) {
-        console.error("error connecting: " + err.stack);
-        return;
-    }
-    // Start the application after successfully connecting to the database
-    start();
-});
 
+// A main menu for selecting application options from, and the start of the UI
 let start = () => {
-    // A main menu for selecting application options from
     inquirer.prompt({
         name: "start",
         type: "list",
@@ -38,13 +28,13 @@ let start = () => {
       }).then(answer => {
         //   a routing section for each of the options firing off a function for each
         if (answer.start === "View all employees.") {
-            viewEmps();
+            view("employee");
         }
         else if (answer.start === "View all departments.") {
-            viewDeps();
+            view("department");
         }
         else if (answer.start === "View all roles.") {
-            viewRoles();
+            view("role");
         }
         else if (answer.start === "Add an employee.") {
             addEmp();
@@ -64,34 +54,22 @@ let start = () => {
           connection.end();
         };
     });
-
-
-
-
-
-
 }
-
-
-// // =============================================================================
-// connection.query("SELECT * FROM actors WHERE attitude = ?", [req.params.att], function(err, result) {
-//     if (err) throw err;
-//     var html = "<h1>Actors With an Attitude of " + req.params.att + "</h1>";
-//     html += "<ul>";
-//     for (var i = 0; i < result.length; i++) {
-//       html += "<li><p> ID: " + result[i].id + "</p>";
-//       html += "<p> Name: " + result[i].name + "</p>";
-//       html += "<p> Coolness Points: " + result[i].coolness_points + "</p>";
-//       html += "<p>Attitude: " + result[i].attitude + "</p></li>";
-//     }
-//     html += "</ul>";
-//     res.send(html);
-//   });
-// // =============================================================================
-
-
-
-
+// Modular function for pulling SQL data
+// pulls all results based on the specified table input
+let view = (table) => {
+    console.log(table);
+    connection.query("SELECT * FROM ??", [table], (err, res) => {
+        if (err) throw err;
+        console.log(`Available ${table}(s):`)
+        // display results
+        res.forEach((value) => {
+            console.log(value);
+        });
+        // return to main menu
+        start();
+    });
+    
 // // =============================================================================
 // console.table([
 //     {
@@ -136,3 +114,235 @@ let start = () => {
 // ]
 // console.table(values[0], values.slice(1));
 // // =============================================================================
+}
+let addEmp = () => {
+    // query for roles and employees
+    // inquirer
+    inquirer.prompt([{
+        name: "first",
+        type: "input",
+        message: "New Employee's First Name?"
+      },
+      {
+        name: "last",
+        type: "input",
+        message: "New Employee's Last Name?"
+      },
+      {
+        name: "role",
+        type: "input",
+        message: "New Employee's Role ID?",
+        validate: answer => {
+          const pass = answer.match(
+            /^[1-9]\d*$/
+          );
+          if (pass) {
+            return true;
+          }
+          return "Please enter a positive number greater than zero.";
+        }
+      },
+      {
+        name: "manager",
+        type: "input",
+        message: "New Employee's Manager's ID?",
+        validate: answer => {
+          const pass = answer.match(
+            /^[1-9]\d*$/
+          );
+          if (pass) {
+            return true;
+          }
+          else if (pass === null || pass === undefined) {
+            return true;
+          }
+          else return "Please enter a positive number or leave blank if they have no manager.";
+        }
+      }
+    ]).then(answer => {
+        // console.log(answer.first + answer.last + answer.role + answer.manager);
+        if (answer.manager === null || answer.manager === undefined || answer.manager === '') {
+            // // insertion
+            connection.query(
+                `INSERT INTO employee SET ?`,
+                {
+                    first_name: answer.first,
+                    last_name: answer.last,
+                    role_id: answer.role,
+                },
+                (err) => {
+                  if (err) throw err;
+                  console.log("Employee Added.");
+                  start();
+                }
+            );
+        }
+        else {
+            // // insertion
+            connection.query(
+                `INSERT INTO employee SET ?`,
+                {
+                    first_name: answer.first,
+                    last_name: answer.last,
+                    role_id: answer.role,
+                    manager_id: answer.manager
+                },
+                (err) => {
+                  if (err) throw err;
+                  console.log("Employee Added.");
+                  start();
+                }
+            );
+        }
+    });
+}
+let addDep = () => {
+    inquirer.prompt([{
+        name: "name",
+        type: "input",
+        message: "New Department Name?",
+        validate: answer => {
+          if (answer !== "") {
+            return true;
+          }
+          return "Please enter at least one character.";
+        }
+      }
+    ]).then(answer => {
+            // // insertion
+            connection.query(
+                `INSERT INTO department SET ?`,
+                {
+                    name: answer.name
+                },
+                (err) => {
+                  if (err) throw err;
+                  console.log("Department Added.");
+                  start();
+                }
+            );
+    });
+}
+let addRole = () => {
+    inquirer.prompt([
+        {
+            name: "title",
+            type: "input",
+            message: "New Role Title?",
+            validate: answer => {
+                if (answer !== "") {
+                    return true;
+                }
+                return "Please enter at least one character.";
+            }
+        },
+        {
+            name: "salary",
+            type: "input",
+            message: "New Role Salary?",
+            validate: answer => {
+                const pass = answer.match(
+                    /^[1-9]\d*$/
+                );
+                if (pass) {
+                    return true;
+                }
+                return "Please enter a positive number.";
+            }
+        },
+        {
+            name: "dep",
+            type: "input",
+            message: "New Role's Department ID?",
+            validate: answer => {
+                const pass = answer.match(
+                    /^[1-9]\d*$/
+                );
+                if (pass) {
+                    return true;
+                }
+                return "Please enter a positive number.";
+            }
+        }
+    ]).then(answer => {
+            // // insertion
+            connection.query(
+                `INSERT INTO role SET ?`,
+                {
+                    title: answer.title,
+                    salary: answer.salary,
+                    department_id: answer.dep
+                },
+                (err) => {
+                    if (err) throw err;
+                    console.log("Role Added.");
+                    start();
+                }
+            );
+    });
+}
+let updateRole = () => {
+    
+    inquirer.prompt([
+        {
+            name: "empID",
+            type: "input",
+            message: "What is the Employee's ID?",
+            validate: answer => {
+                const pass = answer.match(
+                    /^[1-9]\d*$/
+                );
+                if (pass) {
+                    return true;
+                }
+                return "Please enter a positive number greater than zero.";
+            }
+      },
+      {
+          name: "roleID",
+          type: "input",
+          message: "What is the ID of their new Role?",
+          validate: answer => {
+              const pass = answer.match(
+                  /^[1-9]\d*$/
+              );
+              if (pass) {
+                  return true;
+              }
+              return "Please enter a positive number greater than zero.";
+          }
+    }
+    ]).then(answer => {
+        // // insertion
+        connection.query(
+            `UPDATE employee SET ? where ?`,
+            [
+                {
+                    role_id: answer.roleID
+                },
+                {
+                    id: answer.empID
+                }
+            ],
+            (err) => {
+                if (err) throw err;
+                console.log('Employee Updated.');
+                start();
+            }
+        );
+    });
+}
+
+// Initiate MySQL Connection and start the application
+connection.connect(function(err) {
+    if (err) {
+        console.error("error connecting: " + err.stack);
+        return;
+    }
+    // Start the application after successfully connecting to the database
+    start();
+});
+
+
+
+
