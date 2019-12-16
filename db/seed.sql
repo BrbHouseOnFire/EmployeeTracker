@@ -11,12 +11,12 @@ INSERT INTO employee (first_name, last_name, role_id) values
 ("Ilhar", "Ivar", "9"),
 ("Joanne", "Jos", "10"),
 ("Kirk", "Kaptain", "11"),
-("Loser", "Lost", "12")
+("Loser", "Lost", "12");
 
 INSERT INTO department (name) values 
 ("Miners"),
 ("Footmen"),
-("Specialists")
+("Specialists");
 
 INSERT INTO role (title, salary, department_id) values 
 ('Wisp', '55000', 1),
@@ -32,4 +32,4 @@ INSERT INTO role (title, salary, department_id) values
 ('Wyvern', '130000', 3),
 ('Warg Rider', '120000', 3),
 ('Technician', '110000', 3),
-('Manager', '902000', 3)
+('Manager', '902000', 3);
