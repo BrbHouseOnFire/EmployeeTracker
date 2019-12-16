@@ -58,63 +58,90 @@ let start = () => {
 // Modular function for pulling SQL data
 // pulls all results based on the specified table input
 let view = (table) => {
-    console.log(table);
-    connection.query("SELECT * FROM ??", [table], (err, res) => {
-        if (err) throw err;
-        console.log(`Available ${table}(s):`)
-        // display results
-        res.forEach((value) => {
-            console.log(value);
+    if (table === "employee") viewEmp();
+    else {
+        connection.query("SELECT * FROM ??", [table], (err, res) => {
+            if (err) throw err;
+            console.log(`Available ${table}(s):`)
+            // display results
+            res.forEach((value) => {
+                console.log(value);
+            });
+            // return to main menu
+            start();
         });
-        // return to main menu
+    }
+}
+let viewEmp = () => {
+    connection.query(`
+    select distinct e.id, e.first_name, e.last_name, r.title, e.role_id, r.salary, 
+    d.name, d.id as "depID", CONCAT(e2.first_name, " ", e2.last_name) as "manager", 
+    e.manager_id from employee e
+    inner join employee e2 on e.manager_id = e2.id
+    inner join role r on r.id = e.role_id
+    inner join department d on r.department_id = d.id`, (err, res) => {
+        if (err) throw err;
+        let displayArr = [];
+        res.forEach((value) => {
+            let element = [value.id, value.first_name, value.last_name, 
+                value.title, value.role_id, value.salary, value.name, value.depID, 
+                value.manager, value.manager_id];
+            displayArr.push(element)
+        });
+        console.table(['ID', 'First Name', 'Last Name', 
+        'Title', 'Role ID', 'Salary', 'Department', 'Department ID',
+         'Manager', 'Manager ID'], displayArr);
         start();
     });
+
     
-// // =============================================================================
-// console.table([
-//     {
-//       name: 'foo',
-//       age: 10
-//     }, {
-//       name: 'bar',
-//       age: 20
-//     }
-//   ]);
-  
-//   // prints
-//   name  age
-//   ----  ---
-//   foo   10
-//   bar   20
-// console.table('Several objects', [...]);
- 
-// Several objects
-// ---------------
-// name  age
-// ----  ---
-// foo   10
-// bar   20
-// baz   30
+    // // =============================================================================
+    // console.table([
+    //     {
+    //       name: 'foo',
+    //       age: 10
+    //     }, {
+    //       name: 'bar',
+    //       age: 20
+    //     }
+    //   ]);
+    
+    //   // prints
+    //   name  age
+    //   ----  ---
+    //   foo   10
+    //   bar   20
+    // console.table('Several objects', [...]);
+    
+    // Several objects
+    // ---------------
+    // name  age
+    // ----  ---
+    // foo   10
+    // bar   20
+    // baz   30
 
-// var values = [
-//     ['max', 20],
-//     ['joe', 30]
-//   ];
-//   console.table(['name', 'age'], values);
-   
-//   name  age
-//   ----  ---
-//   max   20 
-//   joe   30
+    // var values = [
+    //     ['max', 20],
+    //     ['joe', 30]
+    //   ];
+    //   console.table(['name', 'age'], values);
+    
+    //   name  age
+    //   ----  ---
+    //   max   20 
+    //   joe   30
 
-//   var values = [
-//     ['name', 'age'],
-//     ['max', 20],
-//     ['joe', 30]
-// ]
-// console.table(values[0], values.slice(1));
-// // =============================================================================
+    //   var values = [
+    //     ['name', 'age'],
+    //     ['max', 20],
+    //     ['joe', 30]
+    // ]
+    // console.table(values[0], values.slice(1));
+    // // =============================================================================
 }
+
+
 let addEmp = () => {
     // query for roles and employees
     // inquirer
