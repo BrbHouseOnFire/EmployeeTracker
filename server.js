@@ -1,6 +1,7 @@
 // Dependencies
 const mysql = require("mysql");
 const cTable = require('console.table');
+const inquirer = require('inquirer');
 // Create instance of express app.
 
 const connection = mysql.createConnection({
@@ -10,16 +11,66 @@ const connection = mysql.createConnection({
     password: "123asdjkl",
     database: "emp_db"
 });
-
 // Initiate MySQL Connection.
 connection.connect(function(err) {
     if (err) {
         console.error("error connecting: " + err.stack);
         return;
     }
-    // console.log("connected as id " + connection.threadId);
+    // Start the application after successfully connecting to the database
+    start();
 });
 
+let start = () => {
+    // A main menu for selecting application options from
+    inquirer.prompt({
+        name: "start",
+        type: "list",
+        message: "What would you like to do?",
+        choices: ["View all employees.", 
+        "View all departments.", 
+        "View all roles.",
+        "Add an employee.",
+        "Add a department.",
+        "Add a role.",
+        "Update an employee's role.",
+        "EXIT"]
+      }).then(answer => {
+        //   a routing section for each of the options firing off a function for each
+        if (answer.start === "View all employees.") {
+            viewEmps();
+        }
+        else if (answer.start === "View all departments.") {
+            viewDeps();
+        }
+        else if (answer.start === "View all roles.") {
+            viewRoles();
+        }
+        else if (answer.start === "Add an employee.") {
+            addEmp();
+        }
+        else if (answer.start === "Add a department.") {
+            addDep();
+        }
+        else if (answer.start === "Add a role.") {
+            addRole();
+        }
+        else if (answer.start === "Update an employee's role.") {
+            updateRole();
+        }
+        else {
+          // exit
+          console.log("Exiting...")
+          connection.end();
+        };
+    });
+
+
+
+
+
+
+}
 
 
 // // =============================================================================
