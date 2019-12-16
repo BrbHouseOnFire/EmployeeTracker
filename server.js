@@ -1,9 +1,8 @@
 // Dependencies
-const express = require("express");
+// const express = require("express");
 const mysql = require("mysql");
 const cTable = require('console.table');
 // Create instance of express app.
-let app = express();
 
 const connection = mysql.createConnection({
     host: "localhost",
