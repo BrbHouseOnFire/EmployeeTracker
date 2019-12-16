@@ -1,5 +1,4 @@
 // Dependencies
-// const express = require("express");
 const mysql = require("mysql");
 const cTable = require('console.table');
 // Create instance of express app.
@@ -9,7 +8,7 @@ const connection = mysql.createConnection({
     port: 3306,
     user: "root",
     password: "123asdjkl",
-    database: "employee_db"
+    database: "emp_db"
 });
 
 // Initiate MySQL Connection.
@@ -18,7 +17,7 @@ connection.connect(function(err) {
         console.error("error connecting: " + err.stack);
         return;
     }
-    console.log("connected as id " + connection.threadId);
+    // console.log("connected as id " + connection.threadId);
 });
 
 

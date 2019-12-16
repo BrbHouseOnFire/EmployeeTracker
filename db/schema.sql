@@ -1,3 +1,7 @@
+DROP DATABASE IF EXISTS emp_db;
+CREATE database emp_db;
+USE emp_db;
+
 CREATE TABLE department (
   id INT NOT NULL AUTO_INCREMENT,
   name VARCHAR(30) NULL,
