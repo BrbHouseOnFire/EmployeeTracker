@@ -19,7 +19,7 @@ let start = () => {
         type: "list",
         message: "What would you like to do?",
         choices: ["View all employees.", 
-        // "View all employees in a Department.",
+        "View all employees in a Department.",
         // "View employees in a specific role.",
         "View all departments.", 
         "View all roles.",
@@ -118,6 +118,57 @@ let viewRole = () => {
 }
 // To build & add to start
 let viewSingleDep = () => {
+    connection.query("SELECT * FROM department", (err, res) => {
+        if (err) throw err;
+        // array of just department names
+        let choiceArr = [];
+        // array of department names & IDs
+        let fullArr = []
+        res.forEach((value) => {
+            choiceArr.push(value.name);
+            let tempArr = [];
+            tempArr.push(value.name, value.id);
+            fullArr.push(tempArr);
+        });
+        inquirer.prompt([
+            {
+            name: "depChoice",
+            type: "list",
+            message: "What department would you like to view?",
+            choices: choiceArr
+            }
+        ]).then(answer => {
+                let depHoldingID;
+                // Grab the ID of the corresponding department
+                fullArr.forEach((value) => {
+                    if (value[0] === answer.depChoice) {
+                        depHoldingID = value[1];
+                    }
+                });
+                // // final pull
+                connection.query(`
+                select distinct e.id, e.first_name, e.last_name, r.title, e.role_id, r.salary, 
+                d.name, d.id as "depID", CONCAT(e2.first_name, " ", e2.last_name) as "manager", 
+                e.manager_id from employee e
+                left join employee e2 on e.manager_id = e2.id
+                inner join role r on r.id = e.role_id
+                inner join department d on r.department_id = d.id
+                where ?`, [{ 'd.id': depHoldingID}], (err, res) => {
+                    if (err) throw err;
+                    let displayArr = [];
+                    res.forEach((value) => {
+                        let element = [value.id, value.first_name, value.last_name, 
+                            value.title, value.role_id, value.salary, value.name, value.depID, 
+                            value.manager, value.manager_id];
+                        displayArr.push(element)
+                    });
+                    console.table(['ID', 'First Name', 'Last Name', 
+                    'Title', 'Role ID', 'Salary', 'Department', 'Department ID',
+                    'Manager', 'Manager ID'], displayArr);
+                    start();
+                });
+        });
+    });
 
 }
 // To build & add to start
