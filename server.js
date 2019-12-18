@@ -13,7 +13,8 @@ const connection = mysql.createConnection({
 
 // A main menu for selecting application options from, and the start of the UI
 let start = () => {
-    inquirer.prompt({
+    inquirer.prompt(
+        {
         name: "start",
         type: "list",
         message: "What would you like to do?",
@@ -55,13 +56,6 @@ let start = () => {
         };
     });
 }
-// Modular function for pulling SQL data
-// pulls all results based on the specified table input
-// let view = (table) => {
-//     if (table === "employee") viewEmp();
-//     else if (table === "department") viewDep();
-//     else if (table === "role") viewRole();
-// }
 let viewEmp = () => {
     connection.query(`
     select distinct e.id, e.first_name, e.last_name, r.title, e.role_id, r.salary, 
@@ -83,52 +77,6 @@ let viewEmp = () => {
          'Manager', 'Manager ID'], displayArr);
         start();
     });
-
-    
-    // // =============================================================================
-    // console.table([
-    //     {
-    //       name: 'foo',
-    //       age: 10
-    //     }, {
-    //       name: 'bar',
-    //       age: 20
-    //     }
-    //   ]);
-    
-    //   // prints
-    //   name  age
-    //   ----  ---
-    //   foo   10
-    //   bar   20
-    // console.table('Several objects', [...]);
-    
-    // Several objects
-    // ---------------
-    // name  age
-    // ----  ---
-    // foo   10
-    // bar   20
-    // baz   30
-
-    // var values = [
-    //     ['max', 20],
-    //     ['joe', 30]
-    //   ];
-    //   console.table(['name', 'age'], values);
-    
-    //   name  age
-    //   ----  ---
-    //   max   20 
-    //   joe   30
-
-    //   var values = [
-    //     ['name', 'age'],
-    //     ['max', 20],
-    //     ['joe', 30]
-    // ]
-    // console.table(values[0], values.slice(1));
-    // // =============================================================================
 }
 let viewDep = () => {
     
@@ -160,8 +108,35 @@ let viewRole = () => {
         start();
     });
 }
+// To build & add to start
+let viewSingleDep = () => {
 
+}
+// To build & add to start
+let viewSingleRole = () => {
+
+}
+
+// Update Role & Manager to function off inquirer choice list of existing data options.
 let addEmp = () => {
+
+    
+    // connection.query("SELECT * FROM X", (err, res) => {
+    //     if (err) throw err;
+    //     // array of just X names
+    //     let choiceArr = [];
+    //     // array of X names & IDs
+    //     let fullArr = []
+    //     res.forEach((value) => {
+    //         choiceArr.push(value.name);
+    //         let tempArr = [];
+    //         tempArr.push(value.name, value.id);
+    //         fullArr.push(tempArr);
+    //     });
+
+    // });
+
+
     // query for roles and employees
     // inquirer
     inquirer.prompt([{
@@ -270,113 +245,160 @@ let addDep = () => {
     });
 }
 let addRole = () => {
-    inquirer.prompt([
-        {
-            name: "title",
-            type: "input",
-            message: "New Role Title?",
-            validate: answer => {
-                if (answer !== "") {
-                    return true;
+    
+    connection.query("SELECT * FROM department", (err, res) => {
+        if (err) throw err;
+        // array of just department names
+        let choiceArr = [];
+        // array of department names & IDs
+        let fullArr = []
+        res.forEach((value) => {
+            choiceArr.push(value.name);
+            let tempArr = [];
+            tempArr.push(value.name, value.id);
+            fullArr.push(tempArr);
+        });
+        inquirer.prompt([
+            {
+                name: "title",
+                type: "input",
+                message: "New Role Title?",
+                validate: answer => {
+                    if (answer !== "") {
+                        return true;
+                    }
+                    return "Please enter at least one character.";
                 }
-                return "Please enter at least one character.";
+            },
+            {
+                name: "salary",
+                type: "input",
+                message: "New Role Salary?",
+                validate: answer => {
+                    const pass = answer.match(
+                        /^[1-9]\d*$/
+                    );
+                    if (pass) {
+                        return true;
+                    }
+                    return "Please enter a positive number.";
+                }
+            },
+            {
+            name: "depChoice",
+            type: "list",
+            message: "What department are they in?",
+            choices: choiceArr
             }
-        },
-        {
-            name: "salary",
-            type: "input",
-            message: "New Role Salary?",
-            validate: answer => {
-                const pass = answer.match(
-                    /^[1-9]\d*$/
+        ]).then(answer => {
+                let depHoldingID;
+                // Grab the ID of the corresponding department
+                fullArr.forEach((value) => {
+                    if (value[0] === answer.depChoice) {
+                        depHoldingID = value[1];
+                    }
+                })
+                // // insertion
+                connection.query(
+                    `INSERT INTO role SET ?`,
+                    {
+                        title: answer.title,
+                        salary: answer.salary,
+                        department_id: depHoldingID
+                    },
+                    (err) => {
+                        if (err) throw err;
+                        console.log("Role Added.");
+                        start();
+                    }
                 );
-                if (pass) {
-                    return true;
-                }
-                return "Please enter a positive number.";
-            }
-        },
-        {
-            name: "dep",
-            type: "input",
-            message: "New Role's Department ID?",
-            validate: answer => {
-                const pass = answer.match(
-                    /^[1-9]\d*$/
-                );
-                if (pass) {
-                    return true;
-                }
-                return "Please enter a positive number.";
-            }
-        }
-    ]).then(answer => {
-            // // insertion
-            connection.query(
-                `INSERT INTO role SET ?`,
-                {
-                    title: answer.title,
-                    salary: answer.salary,
-                    department_id: answer.dep
-                },
-                (err) => {
-                    if (err) throw err;
-                    console.log("Role Added.");
-                    start();
-                }
-            );
+        });
     });
 }
 let updateRole = () => {
+    // collect list of employees for inquirer prompt
+    connection.query("SELECT * FROM employee", (err, res) => {
+        if (err) throw err;
+        // array of just employee names
+        let empChoiceArr = [];
+        // array of employee names & IDs
+        let empFullArr = []
+        res.forEach((value) => {
+            empChoiceArr.push(value.first_name + " " + value.last_name);
+            let tempArr = [];
+            tempArr.push(value.first_name + " " + value.last_name, value.id);
+            empFullArr.push(tempArr);
+        });
+        // collect list of roles for inquirer prompt
+        connection.query("SELECT * FROM role", (err, res) => {
+            if (err) throw err;
+            // array of just role titles
+            let roleChoiceArr = [];
+            // array of role titles & IDs
+            let roleFullArr = []
+            res.forEach((value) => {
+                roleChoiceArr.push(value.title);
+                let tempArr = [];
+                tempArr.push(value.title, value.id);
+                roleFullArr.push(tempArr);
+            });
+            
     
-    inquirer.prompt([
-        {
-            name: "empID",
-            type: "input",
-            message: "What is the Employee's ID?",
-            validate: answer => {
-                const pass = answer.match(
-                    /^[1-9]\d*$/
-                );
-                if (pass) {
-                    return true;
-                }
-                return "Please enter a positive number greater than zero.";
-            }
-      },
-      {
-          name: "roleID",
-          type: "input",
-          message: "What is the ID of their new Role?",
-          validate: answer => {
-              const pass = answer.match(
-                  /^[1-9]\d*$/
-              );
-              if (pass) {
-                  return true;
-              }
-              return "Please enter a positive number greater than zero.";
-          }
-    }
-    ]).then(answer => {
-        // // insertion
-        connection.query(
-            `UPDATE employee SET ? where ?`,
-            [
+            inquirer.prompt([
                 {
-                    role_id: answer.roleID
+                name: "empIDChoice",
+                type: "list",
+                message: "Which employee would you like to update?",
+                choices: empChoiceArr
                 },
                 {
-                    id: answer.empID
+                name: "roleIDChoice",
+                type: "list",
+                message: "Which role should they be assigned?",
+                choices: roleChoiceArr
                 }
-            ],
-            (err) => {
-                if (err) throw err;
-                console.log('Employee Updated.');
-                start();
-            }
-        );
+            ]).then(answer => {
+                // collect the relevant IDs for role and employee
+                // Grab the ID of the corresponding employee
+                let empHoldingID;
+                empFullArr.forEach((value) => {
+                    if (value[0] === answer.empIDChoice) {
+                        empHoldingID = value[1];
+                    }
+                })
+                // Grab the ID of the corresponding role
+                let roleHoldingID;
+                roleFullArr.forEach((value) => {
+                    if (value[0] === answer.roleIDChoice) {
+                        roleHoldingID = value[1];
+                    }
+                })
+
+                // // insertion
+                connection.query(
+                    `UPDATE employee SET ? where ?`,
+                    [
+                        {
+                            role_id: roleHoldingID
+                        },
+                        {
+                            id: empHoldingID
+                        }
+                    ],
+                    (err) => {
+                        if (err) throw err;
+                        console.log('Employee Updated.');
+                        start();
+                    }
+                );
+                // end final query
+            });
+            // end prompt
+            
+        });
     });
+
+
 }
 
 // Initiate MySQL Connection and start the application
