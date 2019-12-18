@@ -19,6 +19,8 @@ let start = () => {
         type: "list",
         message: "What would you like to do?",
         choices: ["View all employees.", 
+        // "View all employees in a Department.",
+        // "View employees in a specific role.",
         "View all departments.", 
         "View all roles.",
         "Add an employee.",
@@ -36,6 +38,12 @@ let start = () => {
         }
         else if (answer.start === "View all roles.") {
             viewRole();
+        }
+        else if (answer.start === "View all employees in a Department.") {
+            viewSingleDep();
+        }
+        else if (answer.start === "View employees in a specific role.") {
+            viewSingleRole();
         }
         else if (answer.start === "Add an employee.") {
             addEmp();
@@ -120,102 +128,152 @@ let viewSingleRole = () => {
 // Update Role & Manager to function off inquirer choice list of existing data options.
 let addEmp = () => {
 
+    // collect list of employees for inquirer prompt
+    connection.query("SELECT * FROM employee", (err, res) => {
+        if (err) throw err;
+        // array of just employee names
+        let empChoiceArr = [];
+        // array of employee names & IDs
+        let empFullArr = []
+        res.forEach((value) => {
+            empChoiceArr.push(value.first_name + " " + value.last_name);
+            let tempArr = [];
+            tempArr.push(value.first_name + " " + value.last_name, value.id);
+            empFullArr.push(tempArr);
+        });
+        // Push an option for not having a manager
+        empChoiceArr.push("No Manager");
+        empFullArr.push("No Manager", "");
+
+        // grab roles for inquirer choices
+        connection.query("SELECT * FROM role", (err, res) => {
+            if (err) throw err;
+            // array of just role titles
+            let roleChoiceArr = [];
+            // array of role titles & IDs
+            let roleFullArr = []
+            res.forEach((value) => {
+                roleChoiceArr.push(value.title);
+                let tempArr = [];
+                tempArr.push(value.title, value.id);
+                roleFullArr.push(tempArr);
+            });
     
-    // connection.query("SELECT * FROM X", (err, res) => {
-    //     if (err) throw err;
-    //     // array of just X names
-    //     let choiceArr = [];
-    //     // array of X names & IDs
-    //     let fullArr = []
-    //     res.forEach((value) => {
-    //         choiceArr.push(value.name);
-    //         let tempArr = [];
-    //         tempArr.push(value.name, value.id);
-    //         fullArr.push(tempArr);
-    //     });
 
-    // });
+            // inquirer TO UPDATE
+            inquirer.prompt([{
+                name: "first",
+                type: "input",
+                message: "New Employee's First Name?"
+            },
+            {
+                name: "last",
+                type: "input",
+                message: "New Employee's Last Name?"
+            },
+            {
+            name: "empIDChoice",
+            type: "list",
+            message: "Who is their Manager?",
+            choices: empChoiceArr
+            },
+            {
+            name: "roleIDChoice",
+            type: "list",
+            message: "What role are they to be assigned?",
+            choices: roleChoiceArr
+            },
+            // {
+            //     name: "role",
+            //     type: "input",
+            //     message: "New Employee's Role ID?",
+            //     validate: answer => {
+            //     const pass = answer.match(
+            //         /^[1-9]\d*$/
+            //     );
+            //     if (pass) {
+            //         return true;
+            //     }
+            //     return "Please enter a positive number greater than zero.";
+            //     }
+            // },
+            // {
+            //     name: "manager",
+            //     type: "input",
+            //     message: "New Employee's Manager's ID?",
+            //     validate: answer => {
+            //     const pass = answer.match(
+            //         /^[1-9]\d*$/
+            //     );
+            //     if (pass) {
+            //         return true;
+            //     }
+            //     else if (pass === null || pass === undefined) {
+            //         return true;
+            //     }
+            //     else return "Please enter a positive number or leave blank if they have no manager.";
+            //     }
+            // }
+            ]).then(answer => {
 
 
-    // query for roles and employees
-    // inquirer
-    inquirer.prompt([{
-        name: "first",
-        type: "input",
-        message: "New Employee's First Name?"
-      },
-      {
-        name: "last",
-        type: "input",
-        message: "New Employee's Last Name?"
-      },
-      {
-        name: "role",
-        type: "input",
-        message: "New Employee's Role ID?",
-        validate: answer => {
-          const pass = answer.match(
-            /^[1-9]\d*$/
-          );
-          if (pass) {
-            return true;
-          }
-          return "Please enter a positive number greater than zero.";
-        }
-      },
-      {
-        name: "manager",
-        type: "input",
-        message: "New Employee's Manager's ID?",
-        validate: answer => {
-          const pass = answer.match(
-            /^[1-9]\d*$/
-          );
-          if (pass) {
-            return true;
-          }
-          else if (pass === null || pass === undefined) {
-            return true;
-          }
-          else return "Please enter a positive number or leave blank if they have no manager.";
-        }
-      }
-    ]).then(answer => {
-        // console.log(answer.first + answer.last + answer.role + answer.manager);
-        if (answer.manager === null || answer.manager === undefined || answer.manager === '') {
-            // // insertion
-            connection.query(
-                `INSERT INTO employee SET ?`,
-                {
-                    first_name: answer.first,
-                    last_name: answer.last,
-                    role_id: answer.role,
-                },
-                (err) => {
-                  if (err) throw err;
-                  console.log("Employee Added.");
-                  start();
+                let empHoldingID;
+                empFullArr.forEach((value) => {
+                    if (value[0] === answer.empIDChoice) {
+                        empHoldingID = value[1];
+                    }
+                })
+                // Grab the ID of the corresponding role
+                let roleHoldingID;
+                roleFullArr.forEach((value) => {
+                    if (value[0] === answer.roleIDChoice) {
+                        roleHoldingID = value[1];
+                    }
+                })
+
+
+
+                // console.log(answer.first + answer.last + answer.role + answer.manager);
+                if (empHoldingID === null || empHoldingID === undefined || empHoldingID === '') {
+                    // // insertion
+                    connection.query(
+                        `INSERT INTO employee SET ?`,
+                        {
+                            first_name: answer.first,
+                            last_name: answer.last,
+                            role_id: roleHoldingID,
+                        },
+                        (err) => {
+                        if (err) throw err;
+                        console.log("Employee Added.");
+                        start();
+                        }
+                    );
                 }
-            );
-        }
-        else {
-            // // insertion
-            connection.query(
-                `INSERT INTO employee SET ?`,
-                {
-                    first_name: answer.first,
-                    last_name: answer.last,
-                    role_id: answer.role,
-                    manager_id: answer.manager
-                },
-                (err) => {
-                  if (err) throw err;
-                  console.log("Employee Added.");
-                  start();
+                else {
+                    // // insertion
+                    connection.query(
+                        `INSERT INTO employee SET ?`,
+                        {
+                            first_name: answer.first,
+                            last_name: answer.last,
+                            role_id: roleHoldingID,
+                            manager_id: empHoldingID
+                        },
+                        (err) => {
+                        if (err) throw err;
+                        console.log("Employee Added.");
+                        start();
+                        }
+                    );
                 }
-            );
-        }
+            });
+
+
+        });
     });
+
+
 }
 let addDep = () => {
     inquirer.prompt([{
