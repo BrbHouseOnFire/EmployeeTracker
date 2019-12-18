@@ -69,7 +69,7 @@ let viewEmp = () => {
     select distinct e.id, e.first_name, e.last_name, r.title, e.role_id, r.salary, 
     d.name, d.id as "depID", CONCAT(e2.first_name, " ", e2.last_name) as "manager", 
     e.manager_id from employee e
-    inner join employee e2 on e.manager_id = e2.id
+    left join employee e2 on e.manager_id = e2.id
     inner join role r on r.id = e.role_id
     inner join department d on r.department_id = d.id`, (err, res) => {
         if (err) throw err;
@@ -182,41 +182,11 @@ let addEmp = () => {
             type: "list",
             message: "What role are they to be assigned?",
             choices: roleChoiceArr
-            },
-            // {
-            //     name: "role",
-            //     type: "input",
-            //     message: "New Employee's Role ID?",
-            //     validate: answer => {
-            //     const pass = answer.match(
-            //         /^[1-9]\d*$/
-            //     );
-            //     if (pass) {
-            //         return true;
-            //     }
-            //     return "Please enter a positive number greater than zero.";
-            //     }
-            // },
-            // {
-            //     name: "manager",
-            //     type: "input",
-            //     message: "New Employee's Manager's ID?",
-            //     validate: answer => {
-            //     const pass = answer.match(
-            //         /^[1-9]\d*$/
-            //     );
-            //     if (pass) {
-            //         return true;
-            //     }
-            //     else if (pass === null || pass === undefined) {
-            //         return true;
-            //     }
-            //     else return "Please enter a positive number or leave blank if they have no manager.";
-            //     }
-            // }
+            }
             ]).then(answer => {
 
 
+                // Grab the ID of the corresponding manager
                 let empHoldingID;
                 empFullArr.forEach((value) => {
                     if (value[0] === answer.empIDChoice) {
